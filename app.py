@@ -161,12 +161,18 @@ if result:
 
         total_fail = result["mismatches"] + result["exceptions"] + result["timeouts"]
         with st.expander(f"All recorded failures ({len(failures)} of {total_fail} shown)"):
+            rows = []
             for x in failures:
-                inp = x["input"] if len(x["input"]) <= 10 else f'{x["input"][:10]} ... ({len(x["input"])} elements)'
-                st.markdown(
-                    f'- #{x["test_index"]} [{x["category"]}: {x["label"]}] '
-                    f'`{inp}` -> expected `{x["expected"]}`, got `{x["actual"]}`'
-                )
+                inp = x["input"] if len(x["input"]) <= 10 else x["input"][:10] + ["..."]
+                rows.append({
+                    "test": x["test_index"],
+                    "type": x["category"],
+                    "label": x["label"],
+                    "input": str(inp),
+                    "expected": str(x["expected"]),
+                    "actual": str(x["actual"]),
+                })
+            st.table(rows)
 
     if st.session_state.get("report"):
         st.download_button(

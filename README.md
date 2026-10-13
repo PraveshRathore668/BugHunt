@@ -4,7 +4,7 @@ BugHunt finds bugs in programming solutions by comparing them against a trusted 
 
 > Passing generated tests does **not** prove a solution is correct. BugHunt reports the failures it finds in a given run, nothing more.
 
-**Live demo:** _(URL added after deployment)_
+**Live demo:** https://bughunt-jzwefy9kdgpcvjeffnzeuu.streamlit.app/
 
 ## The problem
 

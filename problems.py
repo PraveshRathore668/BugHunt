@@ -161,3 +161,92 @@ PROBLEMS = {
         },
     },
 }
+
+
+# ====================================================================
+# Metadata for the UI and quality checks (Day 2)
+# ====================================================================
+
+COMMON_CONSTRAINTS = [
+    "1 <= n <= 1000, where n is the length of arr (empty arrays are NOT valid inputs)",
+    "Every element is an integer in the range [-10000, 10000]",
+    "Duplicates and negative values are allowed",
+]
+
+METADATA = {
+    "max_element": {
+        "statement": (
+            "Given a non-empty list of integers, return the largest value in the list."
+        ),
+        "signature": "def solve(arr: list[int]) -> int",
+        "input_spec": "arr: a list of n integers.",
+        "output_spec": "A single integer: the maximum value in arr.",
+        "constraints": COMMON_CONSTRAINTS,
+        "samples": [
+            {"input": [3, 1, 4, 1, 5], "output": 5,
+             "explanation": "5 is the largest value."},
+            {"input": [-7, -3, -9], "output": -3,
+             "explanation": "With all-negative input, the maximum is the negative number closest to zero."},
+        ],
+        "algorithm": (
+            "Start with the first element as the best so far. Scan the rest of the list "
+            "once, replacing the best whenever a larger value appears."
+        ),
+        "time_complexity": "O(n)",
+        "space_complexity": "O(1)",
+    },
+    "second_largest": {
+        "statement": (
+            "Given a non-empty list of integers, return the second largest DISTINCT value. "
+            "Duplicates of the maximum do not count as the second largest. "
+            "If the list has fewer than 2 distinct values, return None."
+        ),
+        "signature": "def solve(arr: list[int]) -> int | None",
+        "input_spec": "arr: a list of n integers.",
+        "output_spec": (
+            "An integer (the second largest distinct value), or None if arr has "
+            "fewer than 2 distinct values."
+        ),
+        "constraints": COMMON_CONSTRAINTS,
+        "samples": [
+            {"input": [5, 5, 3], "output": 3,
+             "explanation": "The distinct values are 5 and 3, so the second largest is 3, not 5."},
+            {"input": [7, 7], "output": None,
+             "explanation": "Only one distinct value exists, so the answer is None."},
+            {"input": [4, 9, 2, 9], "output": 4,
+             "explanation": "The distinct values are 2, 4 and 9, so the second largest is 4."},
+        ],
+        "algorithm": (
+            "Remove duplicates with a set, sort the distinct values, and return the "
+            "second from the end. Return None if there are fewer than 2 distinct values."
+        ),
+        "time_complexity": "O(n log n)",
+        "space_complexity": "O(n)",
+    },
+    "max_subarray": {
+        "statement": (
+            "Given a non-empty list of integers, return the largest possible sum of a "
+            "NON-EMPTY contiguous subarray."
+        ),
+        "signature": "def solve(arr: list[int]) -> int",
+        "input_spec": "arr: a list of n integers.",
+        "output_spec": "A single integer: the maximum sum over all non-empty contiguous subarrays.",
+        "constraints": COMMON_CONSTRAINTS,
+        "samples": [
+            {"input": [-2, 1, -3, 4, -1, 2, 1, -5, 4], "output": 6,
+             "explanation": "The subarray [4, -1, 2, 1] has sum 6, the largest possible."},
+            {"input": [-3, -1, -2], "output": -1,
+             "explanation": "The subarray must be non-empty, so the best choice is [-1], not an empty sum of 0."},
+        ],
+        "algorithm": (
+            "Kadane's algorithm: walk through the list keeping the best sum of a subarray "
+            "ending at the current position (either extend the previous one or start fresh), "
+            "and track the best value seen overall."
+        ),
+        "time_complexity": "O(n)",
+        "space_complexity": "O(1)",
+    },
+}
+
+for _key, _meta in METADATA.items():
+    PROBLEMS[_key].update(_meta)

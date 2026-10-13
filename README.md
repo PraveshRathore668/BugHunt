@@ -21,7 +21,6 @@ An optimized solution can pass the sample cases and still fail on all-negative a
 - **Question quality checks:** deterministic checks for missing fields, wrong samples, invalid generated inputs and near-duplicate statements. These are rule-based, not AI.
 
 ## Architecture
-cat >> README.md << 'EOF'
 
 ## Technology
 

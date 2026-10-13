@@ -162,6 +162,7 @@ if result:
         total_fail = result["mismatches"] + result["exceptions"] + result["timeouts"]
         with st.expander(f"All recorded failures ({len(failures)} of {total_fail} shown)"):
             rows = []
+            rows = []
             for x in failures:
                 inp = x["input"] if len(x["input"]) <= 10 else x["input"][:10] + ["..."]
                 rows.append({

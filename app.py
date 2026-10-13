@@ -3,6 +3,11 @@
 import streamlit as st
 
 from problems import PROBLEMS
+from datetime import datetime, timezone
+
+from minimizer import classify, minimize
+from reports import build_report, report_to_json
+from sandbox import CandidateRunner
 from tester import run_isolated
 
 MAX_TESTS_LIMIT = 500
@@ -77,6 +82,7 @@ st.caption("The same seed always produces the same tests, so results are reprodu
 
 if st.button("Find Bugs", type="primary"):
     count = min(int(count), MAX_TESTS_LIMIT)
+    started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     bar = st.progress(0.0, text="Running tests...")
 
     def on_progress(done, total):
@@ -90,6 +96,16 @@ if st.button("Find Bugs", type="primary"):
         progress=on_progress,
     )
     bar.empty()
+
+    minimized = None
+    if result["failures"] and result["failures"][0]["status"] != "reference_error":
+        first = result["failures"][0]
+        with st.spinner("Minimizing the failing input..."):
+            with CandidateRunner(key, cand_name, result["per_test_timeout"]) as runner:
+                minimized = minimize(problem["reference"], runner.call,
+                                     first["input"], first["status"])
+    st.session_state["minimized"] = minimized
+    st.session_state["report"] = build_report(key, cand_name, result, minimized, started_at)
     st.session_state["result"] = result
     st.session_state["result_label"] = f'{problem["title"]} / {cand_name}'
 
@@ -129,6 +145,19 @@ if result:
         b.markdown(f'**{label}:** `{f["actual"]}`')
         st.markdown(f'**Seed:** `{f["seed"]}`')
 
+        mz = st.session_state.get("minimized")
+        st.subheader("Counterexample")
+        o, r2 = st.columns(2)
+        o.markdown(f'**Original** ({len(f["input"])} elements)')
+        o.code(str(f["input"][:30]) + (" ..." if len(f["input"]) > 30 else ""))
+        if mz and mz["verified"]:
+            r2.markdown(f'**Reduced** ({len(mz["minimized"])} elements, re-verified)')
+            r2.code(str(mz["minimized"]))
+            st.caption(f'{mz["note"]}; {mz["calls_used"]} test calls used. '
+                       "This is a reduced counterexample, not necessarily the smallest possible.")
+        else:
+            r2.markdown("**Reduced:** not available, showing the original.")
+
         total_fail = result["mismatches"] + result["exceptions"] + result["timeouts"]
         with st.expander(f"All recorded failures ({len(failures)} of {total_fail} shown)"):
             for x in failures:
@@ -138,6 +167,13 @@ if result:
                     f'`{inp}` -> expected `{x["expected"]}`, got `{x["actual"]}`'
                 )
 
+    if st.session_state.get("report"):
+        st.download_button(
+            "Download JSON report",
+            report_to_json(st.session_state["report"]),
+            file_name="bughunt_report.json",
+            mime="application/json",
+        )
     if result["stopped_early"]:
         st.warning(f'Run ended early: {result["stopped_early"]}. '
                    f'Executed {result["executed"]} of {result["requested_tests"]} tests.')

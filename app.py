@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 from minimizer import classify, minimize
 from reports import build_report, report_to_json
+from quality import find_duplicates, validate_problem
 from sandbox import CandidateRunner
 from tester import run_isolated
 
@@ -179,3 +180,28 @@ if result:
                    f'Executed {result["executed"]} of {result["requested_tests"]} tests.')
     st.caption(f'Finished in {result["elapsed_seconds"]} s. '
                f'Each test is limited to {result["per_test_timeout"]} s.')
+
+
+# ---------- question quality checks (deterministic, not AI) ----------
+st.divider()
+st.header("Question quality checks")
+st.caption(
+    "These checks come from fixed rules (missing fields, sample outputs checked "
+    "against the reference, generated inputs checked against the constraints). "
+    "They are deterministic and do not use AI."
+)
+
+issues = validate_problem(key, problem)
+if issues:
+    for i in issues:
+        box = st.error if i["severity"] == "error" else st.warning
+        box(f'[{i["check"]}] {i["message"]}')
+else:
+    st.success("No issues found by the deterministic checks for this problem.")
+
+dups = find_duplicates(PROBLEMS)
+if dups:
+    for a, b, ratio in dups:
+        st.warning(f"Possible duplicate questions: {a} and {b} (similarity {ratio}).")
+else:
+    st.caption(f"Duplicate check: no near-duplicate statements among {len(PROBLEMS)} problems.")

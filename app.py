@@ -3,7 +3,7 @@
 import streamlit as st
 
 from problems import PROBLEMS
-from tester import run_differential
+from tester import run_isolated
 
 MAX_TESTS_LIMIT = 500
 
@@ -82,9 +82,9 @@ if st.button("Find Bugs", type="primary"):
     def on_progress(done, total):
         bar.progress(done / total, text=f"Running tests... {done}/{total}")
 
-    result = run_differential(
-        problem["reference"],
-        problem["candidates"][cand_name],
+    result = run_isolated(
+        key,
+        cand_name,
         count,
         int(seed),
         progress=on_progress,
@@ -125,11 +125,11 @@ if result:
         st.markdown(f"**Failing input:** `{shown}`")
         a, b = st.columns(2)
         a.markdown(f'**Expected (reference):** `{f["expected"]}`')
-        label = "Error" if f["status"] == "exception" else "Actual (candidate)"
+        label = {"exception": "Error", "timeout": "Timeout"}.get(f["status"], "Actual (candidate)")
         b.markdown(f'**{label}:** `{f["actual"]}`')
         st.markdown(f'**Seed:** `{f["seed"]}`')
 
-        total_fail = result["mismatches"] + result["exceptions"]
+        total_fail = result["mismatches"] + result["exceptions"] + result["timeouts"]
         with st.expander(f"All recorded failures ({len(failures)} of {total_fail} shown)"):
             for x in failures:
                 inp = x["input"] if len(x["input"]) <= 10 else f'{x["input"][:10]} ... ({len(x["input"])} elements)'
@@ -138,4 +138,8 @@ if result:
                     f'`{inp}` -> expected `{x["expected"]}`, got `{x["actual"]}`'
                 )
 
-    st.caption(f'Finished in {result["elapsed_seconds"]} s. Timeouts are always 0 until Day 3.')
+    if result["stopped_early"]:
+        st.warning(f'Run ended early: {result["stopped_early"]}. '
+                   f'Executed {result["executed"]} of {result["requested_tests"]} tests.')
+    st.caption(f'Finished in {result["elapsed_seconds"]} s. '
+               f'Each test is limited to {result["per_test_timeout"]} s.')

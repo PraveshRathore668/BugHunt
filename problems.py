@@ -250,3 +250,18 @@ METADATA = {
 
 for _key, _meta in METADATA.items():
     PROBLEMS[_key].update(_meta)
+
+
+# ====================================================================
+# Candidate that never finishes (tests timeout handling)
+# ====================================================================
+
+def max_element_bug_hang(arr):
+    """BUG: infinite loop when there are 2+ elements and all are equal."""
+    if len(arr) > 1 and len(set(arr)) == 1:
+        while True:
+            pass
+    return max(arr)
+
+
+PROBLEMS["max_element"]["candidates"]["bug: hangs on all-equal input"] = max_element_bug_hang

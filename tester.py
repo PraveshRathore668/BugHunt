@@ -26,13 +26,20 @@ def outputs_match(expected, actual):
     return type(expected) is type(actual) and expected == actual
 
 
-def run_differential(reference, candidate, count, seed, max_recorded=20, progress=None):
-    """Compare candidate against reference on `count` seeded tests.
+def run_differential(reference, candidate, count, seed, max_recorded=20,
+                     progress=None, candidate_caller=None,
+                     max_seconds=None, stop_after_timeouts=None):
+    """Compare a candidate against the reference on `count` seeded tests.
 
-    Returns a dict with exact counts plus up to `max_recorded` detailed
-    failure records. Calling it again with the same arguments gives the
-    same tests and the same results.
+    candidate_caller: optional function arr -> (status, value) used instead of
+        calling `candidate` directly (this is how isolated runs plug in).
+        Status may be "ok", "error" or "timeout".
+    max_seconds / stop_after_timeouts: budgets that end the run early.
     """
+    if candidate_caller is None:
+        def candidate_caller(arr):
+            return run_function(candidate, arr)
+
     tests = generate_tests(count, seed)
     result = {
         "seed": seed,
@@ -41,15 +48,23 @@ def run_differential(reference, candidate, count, seed, max_recorded=20, progres
         "matches": 0,
         "mismatches": 0,
         "exceptions": 0,
-        "timeouts": 0,            # real timeout handling arrives on Day 3
+        "timeouts": 0,
         "reference_errors": 0,
         "failures": [],
         "failures_not_recorded": 0,
+        "stopped_early": None,
         "elapsed_seconds": 0.0,
     }
 
     start = time.perf_counter()
     for test in tests:
+        if stop_after_timeouts and result["timeouts"] >= stop_after_timeouts:
+            result["stopped_early"] = f"stopped after {result['timeouts']} timeouts"
+            break
+        if max_seconds and time.perf_counter() - start > max_seconds:
+            result["stopped_early"] = f"time budget of {max_seconds} s reached"
+            break
+
         arr = test["input"]
         result["executed"] += 1
         if progress is not None:
@@ -61,8 +76,11 @@ def run_differential(reference, candidate, count, seed, max_recorded=20, progres
             result["reference_errors"] += 1
             status, actual = "reference_error", None
         else:
-            cand_status, actual = run_function(candidate, arr)
-            if cand_status == "error":
+            cand_status, actual = candidate_caller(arr)
+            if cand_status == "timeout":
+                result["timeouts"] += 1
+                status = "timeout"
+            elif cand_status == "error":
                 result["exceptions"] += 1
                 status = "exception"
             elif outputs_match(expected, actual):
@@ -87,4 +105,24 @@ def run_differential(reference, candidate, count, seed, max_recorded=20, progres
             result["failures_not_recorded"] += 1
 
     result["elapsed_seconds"] = round(time.perf_counter() - start, 4)
+    return result
+
+
+def run_isolated(problem_key, candidate_name, count, seed, timeout=2.0,
+                 max_seconds=30, stop_after_timeouts=5, **kwargs):
+    """Like run_differential, but the candidate runs in a separate worker
+    process with a per-test timeout."""
+    from problems import PROBLEMS
+    from sandbox import CandidateRunner
+
+    reference = PROBLEMS[problem_key]["reference"]
+    with CandidateRunner(problem_key, candidate_name, timeout) as runner:
+        result = run_differential(
+            reference, None, count, seed,
+            candidate_caller=runner.call,
+            max_seconds=max_seconds,
+            stop_after_timeouts=stop_after_timeouts,
+            **kwargs,
+        )
+    result["per_test_timeout"] = timeout
     return result

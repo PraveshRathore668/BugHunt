@@ -22,6 +22,15 @@ An optimized solution can pass the sample cases and still fail on all-negative a
 
 ## Architecture
 
+```
+app.py (Streamlit UI) -> problems.py, generators.py, tester.py, reports.py
+tester.py -> sandbox.py -> worker.py (runs one candidate in a separate process)
+tester.py -> minimizer.py (shrinks failing input)
+quality.py: deterministic problem-definition checks
+```
+
+See the source files in the repository root; tests are in tests/.
+
 ## Technology
 
 Python, Streamlit, pytest, Hypothesis, Git and GitHub.

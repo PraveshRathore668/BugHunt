@@ -26,7 +26,7 @@ def outputs_match(expected, actual):
     return type(expected) is type(actual) and expected == actual
 
 
-def run_differential(reference, candidate, count, seed, max_recorded=20):
+def run_differential(reference, candidate, count, seed, max_recorded=20, progress=None):
     """Compare candidate against reference on `count` seeded tests.
 
     Returns a dict with exact counts plus up to `max_recorded` detailed
@@ -52,6 +52,8 @@ def run_differential(reference, candidate, count, seed, max_recorded=20):
     for test in tests:
         arr = test["input"]
         result["executed"] += 1
+        if progress is not None:
+            progress(result["executed"], count)
 
         ref_status, expected = run_function(reference, arr)
         if ref_status == "error":

@@ -29,7 +29,7 @@ tester.py -> minimizer.py (shrinks failing input)
 quality.py: deterministic problem-definition checks
 ```
 
-Full diagram and file table: [ARCHITECTURE.md](ARCHITECTURE.md)..
+Full diagram and file table: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Technology
 

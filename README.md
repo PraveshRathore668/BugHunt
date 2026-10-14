@@ -29,7 +29,7 @@ tester.py -> minimizer.py (shrinks failing input)
 quality.py: deterministic problem-definition checks
 ```
 
-See the source files in the repository root; tests are in tests/.
+Full diagram and file table: [ARCHITECTURE.md](ARCHITECTURE.md)..
 
 ## Technology
 

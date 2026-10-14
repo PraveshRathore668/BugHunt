@@ -65,7 +65,11 @@ At the last run, 69 tests passed (regression, engine, minimizer, report, timeout
 
 ## Screenshots
 
-_(Added after deployment.)_
+![Results](screenshots/results.png)
+
+![Counterexample](screenshots/counterexample.png)
+
+![Quality checks](screenshots/quality.png)
 
 ## Security architecture
 
